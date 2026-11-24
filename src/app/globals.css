@@ -4,42 +4,26 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-amber-50 via-pink-50 to-blue-50 text-slate-800 min-h-screen font-sans;
-    background-attachment: fixed;
+    @apply bg-[#E9F4FC] text-slate-800 min-h-screen;
+    background-image: 
+      radial-gradient(#C8E6F9 1.5px, transparent 1.5px),
+      radial-gradient(#C8E6F9 1.5px, #E9F4FC 1.5px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
   }
 }
 
-/* Custom playful scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #FFF5F5;
-}
-::-webkit-scrollbar-thumb {
-  background: #FFB4B4;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #FF8BA7;
+.bluey-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border: 4px solid #70B4E8;
+  box-shadow: 0 16px 36px -10px rgba(45, 120, 180, 0.25);
 }
 
-/* Floating animation helper */
-@keyframes floatSlow {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-12px) rotate(3deg);
-  }
+.bluey-header-banner {
+  background: linear-gradient(135deg, #3D85C6 0%, #70B4E8 100%);
 }
 
-.animate-float-slow {
-  animation: floatSlow 4s ease-in-out infinite;
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  border: 2px solid rgba(255, 255, 255, 0.7);
+.paw-watermark {
+  background-image: radial-gradient(#3D85C6 15%, transparent 16%);
 }

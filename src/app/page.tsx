@@ -1,221 +1,503 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Sparkles, Calendar, Clock, MapPin, Heart, PartyPopper, Check, X, ShieldAlert, ArrowRight, Gift, Music } from "lucide-react";
+import React, { useState } from "react";
+import { Sparkles, CheckCircle2, User, Users, Phone, MapPin, Calendar, Clock, ArrowRight, ArrowLeft, Heart, Ticket, X, Send } from "lucide-react";
 import confetti from "canvas-confetti";
-import BirthdayVideo from "@/components/BirthdayVideo";
-import DeclineModal from "@/components/DeclineModal";
-import CountdownTimer from "@/components/CountdownTimer";
+import BlueyReelVideo from "@/components/BlueyReelVideo";
+import GardenSeatSelector from "@/components/GardenSeatSelector";
+import AddCalendarButton from "@/components/AddCalendarButton";
 import { EVENT_DETAILS } from "@/types";
 
-export default function BirthdayInvitationPage() {
-  const router = useRouter();
-  const [isDeclineOpen, setIsDeclineOpen] = useState(false);
-  const [hasCelebrated, setHasCelebrated] = useState(false);
+export default function BirthdayInviteApp() {
+  // Step management: 1 = Reel Video, 2 = Guest Name, 3 = Seat Selection, 4 = Final Confirmation
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [guestName, setGuestName] = useState("");
+  const [guestCount, setGuestCount] = useState(2);
+  const [phone, setPhone] = useState("");
+  const [selectedSeatId, setSelectedSeatId] = useState("");
+  const [selectedSeatLabel, setSelectedSeatLabel] = useState("");
+  const [wishes, setWishes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDenyModalOpen, setIsDenyModalOpen] = useState(false);
+  const [denySenderName, setDenySenderName] = useState("");
+  const [denyWish, setDenyWish] = useState("");
+  const [denySubmitted, setDenySubmitted] = useState(false);
 
-  // Initial welcome confetti burst
-  useEffect(() => {
+  // Trigger celebration confetti
+  const launchConfetti = () => {
     try {
       confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.2 },
-      });
-    } catch {
-      // safe fallback
-    }
-  }, []);
-
-  const handleAccept = () => {
-    setHasCelebrated(true);
-    try {
-      // Massive celebratory confetti
-      confetti({
-        particleCount: 150,
-        spread: 100,
+        particleCount: 100,
+        spread: 80,
         origin: { y: 0.6 },
-        colors: ["#FF6B8B", "#FFD166", "#4D96FF", "#6BCB77", "#9D4EDD"],
+        colors: ["#3D85C6", "#70B4E8", "#E98A3C", "#F8B77D", "#FFF4D6"],
       });
-    } catch {
-      // safe fallback
+    } catch {}
+  };
+
+  // Step 1 -> Step 2
+  const handleAcceptInvite = () => {
+    launchConfetti();
+    setCurrentStep(2);
+  };
+
+  // Step 2 -> Step 3
+  const handleProceedToSeatSelection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guestName.trim()) return;
+    setCurrentStep(3);
+  };
+
+  // Step 3 -> Step 4 (Final Submit to MongoDB)
+  const handleFinalSubmit = async () => {
+    if (!selectedSeatId) {
+      alert("Please choose a seat or spot from the garden layout!");
+      return;
     }
 
-    // Smooth transition to party details page
-    setTimeout(() => {
-      router.push("/party-details?status=accepted");
-    }, 900);
+    setIsSubmitting(true);
+    try {
+      await fetch("/api/rsvp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guestName,
+          guestCount,
+          phone,
+          selectedSeatId,
+          selectedSeatLabel,
+          status: "accepted",
+          wishes,
+        }),
+      });
+    } catch (err) {
+      console.warn("MongoDB RSVP submission (offline fallback active):", err);
+    } finally {
+      setIsSubmitting(false);
+      launchConfetti();
+      setCurrentStep(4);
+    }
   };
 
   return (
-    <main className="min-h-screen relative overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
-      {/* Background Decorative Balloons and Sparkles */}
+    <main className="min-h-screen py-6 px-3 sm:px-6 flex flex-col justify-between items-center relative overflow-hidden">
+      {/* Decorative Bluey clouds in background */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-10 left-4 text-5xl animate-float-slow opacity-60">🎈</div>
-        <div className="absolute top-28 right-8 text-6xl animate-bounce-slow opacity-60" style={{ animationDelay: "1.5s" }}>🎈</div>
-        <div className="absolute bottom-20 left-12 text-6xl animate-float-slow opacity-50" style={{ animationDelay: "2s" }}>🎈</div>
-        <div className="absolute top-1/2 right-4 text-4xl animate-pulse opacity-40">✨</div>
-        <div className="absolute bottom-40 right-16 text-5xl animate-wiggle opacity-60">🦁</div>
-        <div className="absolute top-1/3 left-6 text-4xl animate-bounce-slow opacity-40">⭐</div>
+        <div className="absolute top-8 left-6 text-5xl opacity-40 animate-float-slow">☁️</div>
+        <div className="absolute top-24 right-10 text-6xl opacity-40 animate-float-slow" style={{ animationDelay: "2s" }}>☁️</div>
+        <div className="absolute bottom-16 left-12 text-4xl opacity-30 animate-wiggle">🐾</div>
+        <div className="absolute bottom-24 right-14 text-5xl opacity-30 animate-bounce-subtle">🎈</div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        {/* Top Header Card */}
-        <header className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-extrabold px-5 py-2 rounded-full text-xs sm:text-sm tracking-widest uppercase shadow-lg shadow-pink-500/20 mb-4 animate-bounce-slow">
-            <Sparkles className="w-4 h-4 text-yellow-300" />
-            <span>Official VIP Birthday Invitation</span>
-            <Sparkles className="w-4 h-4 text-yellow-300" />
-          </div>
+      <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col items-center">
+        {/* Step Indicator Header (Steps 2, 3, 4) */}
+        {currentStep > 1 && (
+          <div className="w-full mb-6">
+            <div className="flex items-center justify-between bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl border-2 border-bluey-sky shadow-sm">
+              <button
+                onClick={() => setCurrentStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3) : 1))}
+                className="inline-flex items-center space-x-1 text-xs font-bold text-bluey-primary hover:text-bluey-dark"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
 
-          <h1 className="text-4xl sm:text-6xl font-black text-slate-800 tracking-tight leading-tight">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600">
-              {EVENT_DETAILS.childName}
-            </span>{" "}
-            is Turning{" "}
-            <span className="inline-block relative">
-              <span className="text-amber-500 underline decoration-wavy decoration-pink-400">
-                {EVENT_DETAILS.turningAge}!
-              </span>
-              <span className="absolute -top-4 -right-6 text-3xl">🎂</span>
-            </span>
-          </h1>
-
-          <p className="mt-3 text-lg sm:text-xl font-bold text-slate-600 max-w-xl mx-auto">
-            You&apos;re invited to an unforgettable day of safari quests, bouncy castles, and birthday magic! 🦁✨
-          </p>
-        </header>
-
-        {/* Video Invite Section */}
-        <section className="mb-10">
-          <BirthdayVideo childName={EVENT_DETAILS.childName} turningAge={EVENT_DETAILS.turningAge} />
-        </section>
-
-        {/* Invitation Event Summary Card */}
-        <div className="glass-card rounded-[2.5rem] p-6 sm:p-8 shadow-2xl mb-10 border-4 border-white/80">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-pink-100">
-            {/* Date */}
-            <div className="flex flex-col items-center pt-3 md:pt-0">
-              <div className="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mb-3 shadow-inner">
-                <Calendar className="w-6 h-6" />
+              <div className="flex items-center space-x-2 text-xs font-black text-slate-700">
+                <span className={`px-2.5 py-0.5 rounded-full ${currentStep === 2 ? "bg-bluey-primary text-white" : "bg-slate-100"}`}>
+                  1. Your Name
+                </span>
+                <span>•</span>
+                <span className={`px-2.5 py-0.5 rounded-full ${currentStep === 3 ? "bg-bluey-primary text-white" : "bg-slate-100"}`}>
+                  2. Garden Seat
+                </span>
+                <span>•</span>
+                <span className={`px-2.5 py-0.5 rounded-full ${currentStep === 4 ? "bg-emerald-500 text-white" : "bg-slate-100"}`}>
+                  3. VIP Pass
+                </span>
               </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Date</span>
-              <span className="text-base sm:text-lg font-black text-slate-800 mt-1">
-                {EVENT_DETAILS.date}
-              </span>
-            </div>
-
-            {/* Time */}
-            <div className="flex flex-col items-center pt-4 md:pt-0">
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-3 shadow-inner">
-                <Clock className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Time</span>
-              <span className="text-base sm:text-lg font-black text-slate-800 mt-1">
-                {EVENT_DETAILS.time}
-              </span>
-            </div>
-
-            {/* Venue */}
-            <div className="flex flex-col items-center pt-4 md:pt-0">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3 shadow-inner">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Adventure Zone</span>
-              <span className="text-base sm:text-lg font-black text-slate-800 mt-1">
-                {EVENT_DETAILS.venueName}
-              </span>
-              <span className="text-xs text-slate-500 mt-0.5">{EVENT_DETAILS.address}</span>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* TWO PRIMARY ACTION BUTTONS: ACCEPT & REJECT */}
-        <section className="mb-12">
-          <div className="bg-white/90 backdrop-blur-md p-6 sm:p-8 rounded-[2.5rem] shadow-2xl border-4 border-yellow-200 text-center">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2">
-              Will you be there to celebrate with {EVENT_DETAILS.childName}? 🎈
+        {/* STEP 1: Main Invitation Page (Instagram Video Style) */}
+        {currentStep === 1 && (
+          <div className="w-full flex flex-col items-center animate-fadeIn">
+            <div className="text-center mb-3">
+              <div className="inline-flex items-center space-x-2 bg-bluey-primary text-white text-xs font-black px-4 py-1.5 rounded-full shadow-md uppercase tracking-wider mb-1">
+                <span>🐾 Bluey-Themed 1st Birthday</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-800">
+                {EVENT_DETAILS.childName} ({EVENT_DETAILS.nickname}) is Turning 1! 🎂
+              </h1>
+            </div>
+
+            <BlueyReelVideo
+              onAccept={handleAcceptInvite}
+              onDeny={() => setIsDenyModalOpen(true)}
+            />
+          </div>
+        )}
+
+        {/* STEP 2: Guest Name Input */}
+        {currentStep === 2 && (
+          <div className="w-full max-w-md bg-white rounded-[2rem] p-6 sm:p-8 shadow-2xl border-4 border-bluey-sky animate-fadeIn">
+            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-bluey-sky/50 text-bluey-dark flex items-center justify-center text-2xl shadow-inner">
+              🐾
+            </div>
+
+            <h2 className="text-2xl font-black text-center text-slate-800 mb-1">
+              Welcome! Who is attending? 🎉
             </h2>
-            <p className="text-slate-600 text-sm sm:text-base max-w-lg mx-auto mb-8">
-              Click <strong className="text-emerald-600 font-black">ACCEPT</strong> to see all party instructions, schedule, and guidelines prepared by {EVENT_DETAILS.childName}&apos;s parents!
+            <p className="text-xs sm:text-sm text-center text-slate-600 mb-6">
+              Please enter your name so Sharvil&apos;s family can reserve your welcome safari kit and party favors!
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center max-w-xl mx-auto">
-              {/* ACCEPT BUTTON */}
-              <button
-                onClick={handleAccept}
-                className="w-full sm:w-auto flex-1 group relative inline-flex items-center justify-center px-8 py-5 text-lg font-black text-white bg-gradient-to-r from-emerald-500 via-teal-500 to-green-500 hover:from-emerald-600 hover:to-green-600 rounded-3xl shadow-xl shadow-emerald-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-emerald-300"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-9 h-9 rounded-full bg-white/25 flex items-center justify-center">
-                    <Check className="w-6 h-6 text-white stroke-[3]" />
-                  </div>
-                  <div className="text-left">
-                    <span className="block text-xl leading-none">ACCEPT</span>
-                    <span className="text-xs font-semibold text-emerald-100">Yes! I&apos;m Coming! 🎉</span>
-                  </div>
+            <form onSubmit={handleProceedToSeatSelection} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Your Full Name / Family Name *
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sharma Family / Rahul & Priya"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    className="w-full pl-9 pr-3 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:border-bluey-primary text-sm font-semibold"
+                  />
                 </div>
-                <ArrowRight className="w-5 h-5 ml-4 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </div>
 
-              {/* REJECT BUTTON */}
-              <button
-                onClick={() => setIsDeclineOpen(true)}
-                className="w-full sm:w-auto flex-1 inline-flex items-center justify-center px-8 py-5 text-base font-extrabold text-slate-600 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded-3xl border-2 border-slate-200 hover:border-rose-200 shadow-md transition-all duration-300 transform hover:scale-102 active:scale-95 focus:outline-none"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                    <X className="w-5 h-5 text-slate-500 stroke-[3]" />
-                  </div>
-                  <div className="text-left">
-                    <span className="block text-lg leading-none">REJECT</span>
-                    <span className="text-xs font-semibold text-slate-400">Can&apos;t Make It 😢</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Number of Guests
+                  </label>
+                  <div className="relative">
+                    <Users className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                    <select
+                      value={guestCount}
+                      onChange={(e) => setGuestCount(Number(e.target.value))}
+                      className="w-full pl-9 pr-2 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:border-bluey-primary text-sm font-semibold bg-white"
+                    >
+                      <option value={1}>1 Guest</option>
+                      <option value={2}>2 Guests</option>
+                      <option value={3}>3 Guests</option>
+                      <option value={4}>4 Guests</option>
+                      <option value={5}>5+ Family</option>
+                    </select>
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Contact Phone (Optional)
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                    <input
+                      type="tel"
+                      placeholder="e.g. 9876543210"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full pl-9 pr-3 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:border-bluey-primary text-sm font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Sweet Blessing / Wish for Shivi
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Happy 1st Birthday dearest Shivi! May God bless you always! ❤️"
+                  value={wishes}
+                  onChange={(e) => setWishes(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:border-bluey-primary text-xs font-medium resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-bluey-primary to-bluey-dark hover:from-bluey-dark hover:to-bluey-primary text-white font-black text-sm shadow-xl shadow-bluey-primary/30 transition transform active:scale-95 flex items-center justify-center space-x-2 mt-4"
+              >
+                <span>Select Your Garden Seat</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* STEP 3: Garden Layout & Seat Selection */}
+        {currentStep === 3 && (
+          <div className="w-full flex flex-col items-center animate-fadeIn">
+            <GardenSeatSelector
+              selectedSeatId={selectedSeatId}
+              onSeatSelect={(seatId, label) => {
+                setSelectedSeatId(seatId);
+                setSelectedSeatLabel(label);
+              }}
+            />
+
+            {/* Step 3 Action Bar */}
+            <div className="w-full mt-6 bg-white/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border-2 border-bluey-sky shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-xs uppercase font-extrabold text-slate-400 block">
+                  Reserving for: <strong className="text-slate-800">{guestName}</strong> ({guestCount} Guests)
+                </span>
+                <span className="text-sm font-black text-bluey-dark">
+                  {selectedSeatId ? `Selected: ${selectedSeatLabel}` : "Please tap a green seat on the map"}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                disabled={!selectedSeatId || isSubmitting}
+                onClick={handleFinalSubmit}
+                className={`py-3.5 px-8 rounded-2xl font-black text-sm shadow-xl transition transform flex items-center space-x-2 ${
+                  selectedSeatId && !isSubmitting
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-emerald-500/30 active:scale-95 cursor-pointer"
+                    : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                }`}
+              >
+                {isSubmitting ? (
+                  <span>Saving to Guestlist...</span>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                    <span>Confirm & Get VIP Pass</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
-        </section>
+        )}
 
-        {/* Live Countdown preview */}
-        <section className="mb-12">
-          <CountdownTimer />
-        </section>
+        {/* STEP 4: Final Submit & Add to Calendar */}
+        {currentStep === 4 && (
+          <div className="w-full max-w-lg bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border-4 border-emerald-300 text-center animate-fadeIn">
+            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-inner">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
 
-        {/* Fun Preview Highlights */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center pb-8">
-          <div className="bg-white/80 p-5 rounded-2xl border-2 border-pink-200 shadow-sm">
-            <span className="text-3xl block mb-2">🎩🪄</span>
-            <h3 className="font-bold text-slate-800 text-sm">Magic & Superhero Show</h3>
-            <p className="text-xs text-slate-500 mt-1">Live illusionist and interactive superhero games!</p>
+            <div className="inline-flex items-center space-x-1 bg-yellow-400 text-bluey-dark text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>RSVP Confirmed & Saved!</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1">
+              Aapka Bohat Bohat Swagat Hai! 🐾🎉
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mb-6">
+              Thank you, <strong className="text-bluey-primary">{guestName}</strong>! Sharvil (Shivi) and family are overjoyed to have you celebrate his 1st Birthday!
+            </p>
+
+            {/* Official VIP Event Pass */}
+            <div className="relative bg-gradient-to-br from-bluey-primary via-indigo-600 to-bluey-dark text-white rounded-3xl p-5 shadow-xl text-left mb-6 overflow-hidden border-2 border-yellow-300">
+              <div className="absolute top-3 right-3 text-3xl opacity-30 pointer-events-none">
+                🐾
+              </div>
+
+              <div className="flex items-center justify-between border-b border-white/20 pb-3 mb-3">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-yellow-300 block">
+                    VIP GUEST PASS
+                  </span>
+                  <span className="text-lg font-black text-white">
+                    {EVENT_DETAILS.childName} ({EVENT_DETAILS.nickname})&apos;s 1st Birthday
+                  </span>
+                </div>
+                <div className="bg-yellow-400 text-slate-900 text-xs font-black px-2.5 py-1 rounded-xl shadow">
+                  SEAT {selectedSeatId}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs text-white/90">
+                <div>
+                  <span className="block text-white/60 text-[10px] uppercase">Guest Name</span>
+                  <span className="font-extrabold text-yellow-200">{guestName}</span>
+                </div>
+                <div>
+                  <span className="block text-white/60 text-[10px] uppercase">Total Guests</span>
+                  <span className="font-extrabold">{guestCount} Member(s)</span>
+                </div>
+                <div>
+                  <span className="block text-white/60 text-[10px] uppercase">Date & Time</span>
+                  <span className="font-extrabold">{EVENT_DETAILS.date}</span>
+                  <span className="block text-[11px] text-sky-200">{EVENT_DETAILS.time}</span>
+                </div>
+                <div>
+                  <span className="block text-white/60 text-[10px] uppercase">Reserved Table</span>
+                  <span className="font-extrabold text-emerald-200">{selectedSeatLabel || selectedSeatId}</span>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-[11px] text-white/80">
+                <span>📍 Kesarinandan Parkway, Udaipur</span>
+                <span className="font-black text-yellow-300">Theme: Bluey</span>
+              </div>
+            </div>
+
+            {/* Step 4: Add to Calendar Section */}
+            <div className="mb-6">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400 block mb-3">
+                Save the Date to Your Calendar
+              </span>
+              <AddCalendarButton />
+            </div>
+
+            {/* Venue Location Navigation Button */}
+            <div className="bg-sky-50 p-4 rounded-2xl border border-sky-200 mb-6 text-left">
+              <div className="flex items-center space-x-2 text-bluey-primary font-black text-xs uppercase mb-1">
+                <MapPin className="w-4 h-4" />
+                <span>Venue & Navigation</span>
+              </div>
+              <p className="text-xs font-bold text-slate-800">
+                {EVENT_DETAILS.venueName}
+              </p>
+              <p className="text-[11px] text-slate-600 mb-3">
+                {EVENT_DETAILS.address}
+              </p>
+
+              <a
+                href={EVENT_DETAILS.locationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-bluey-primary hover:bg-bluey-dark text-white font-extrabold text-xs shadow transition"
+              >
+                <MapPin className="w-4 h-4" />
+                <span>Open in Google Maps (Opp. ISKCON COVEY)</span>
+              </a>
+            </div>
+
+            {/* Share / Restart Option */}
+            <button
+              onClick={() => setCurrentStep(1)}
+              className="text-xs font-bold text-slate-400 hover:text-slate-600 underline"
+            >
+              Replay Invitation Video
+            </button>
           </div>
-
-          <div className="bg-white/80 p-5 rounded-2xl border-2 border-amber-200 shadow-sm">
-            <span className="text-3xl block mb-2">🏰🎈</span>
-            <h3 className="font-bold text-slate-800 text-sm">Mega Bouncy Castle</h3>
-            <p className="text-xs text-slate-500 mt-1">Safe indoor bouncing fun and obstacle course.</p>
-          </div>
-
-          <div className="bg-white/80 p-5 rounded-2xl border-2 border-sky-200 shadow-sm">
-            <span className="text-3xl block mb-2">🎂🍕</span>
-            <h3 className="font-bold text-slate-800 text-sm">Cake & Treats Feast</h3>
-            <p className="text-xs text-slate-500 mt-1">Delicious custom cake, pizza, and allergy-friendly snacks.</p>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="text-center text-xs text-slate-400 py-6">
-          <p>Hosted with love by {EVENT_DETAILS.hostName} for {EVENT_DETAILS.childName}&apos;s 5th Birthday 🎈</p>
-        </footer>
+        )}
       </div>
 
-      {/* Decline / Rejection Modal */}
-      <DeclineModal
-        isOpen={isDeclineOpen}
-        onClose={() => setIsDeclineOpen(false)}
-        childName={EVENT_DETAILS.childName}
-      />
+      {/* Gentle Deny Modal */}
+      {isDenyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-bluey-sky">
+            <button
+              onClick={() => setIsDenyModalOpen(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {!denySubmitted ? (
+              <div>
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-amber-100 flex items-center justify-center text-3xl">
+                  🥺
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-center text-slate-800 mb-2">
+                  We Will Miss You!
+                </h3>
+                <p className="text-center text-slate-600 text-xs sm:text-sm mb-5 leading-relaxed">
+                  Agar aap kisi wajah se nahi aa pa rahe hain, toh bhi Shivi ke liye apna aashirvaad / sweet blessing message zaroor bhejein! 💌
+                </p>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!denySenderName.trim()) return;
+                    try {
+                      await fetch("/api/rsvp", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          guestName: denySenderName,
+                          status: "denied",
+                          wishes: denyWish,
+                        }),
+                      });
+                    } catch {}
+                    setDenySubmitted(true);
+                  }}
+                  className="space-y-3"
+                >
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Your Name / Family Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Uncle / Auntie / Friend"
+                      value={denySenderName}
+                      onChange={(e) => setDenySenderName(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-bluey-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Aashirvaad / Birthday Wish for Shivi
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="Dearest Shivi, Happy 1st Birthday! Khoob saari khushiyan aur aashirvaad!"
+                      value={denyWish}
+                      onChange={(e) => setDenyWish(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-bluey-primary resize-none"
+                    />
+                  </div>
+
+                  <div className="flex space-x-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsDenyModalOpen(false)}
+                      className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 rounded-xl bg-gradient-to-r from-bluey-primary to-bluey-dark text-white font-bold text-xs shadow flex items-center justify-center space-x-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Send Blessing</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl">
+                  💖
+                </div>
+                <h4 className="text-xl font-black text-slate-800 mb-1">Blessing Delivered!</h4>
+                <p className="text-slate-600 text-xs mb-5">
+                  Thank you, <strong className="text-slate-900">{denySenderName}</strong>! Your warm wishes have been saved for Shivi&apos;s 1st birthday memory book.
+                </p>
+                <button
+                  onClick={() => setIsDenyModalOpen(false)}
+                  className="py-2.5 px-6 rounded-xl bg-bluey-primary text-white font-bold text-xs"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="text-center py-4 text-xs font-semibold text-slate-400">
+        <p>🐾 {EVENT_DETAILS.childName} ({EVENT_DETAILS.nickname})&apos;s 1st Birthday • {EVENT_DETAILS.venueName}, Udaipur</p>
+      </footer>
     </main>
   );
 }

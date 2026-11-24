@@ -8,33 +8,42 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        birthday: {
-          pink: "#FF6B8B",
-          yellow: "#FFD166",
-          blue: "#4D96FF",
-          mint: "#6BCB77",
-          purple: "#9D4EDD",
-          cream: "#FFF9F0",
+        bluey: {
+          dark: "#1A4971",
+          primary: "#3D85C6",
+          light: "#70B4E8",
+          sky: "#C8E6F9",
+          cream: "#FFF7E6",
+          bingo: "#E98A3C",
+          bingoLight: "#F8B77D",
+          cloud: "#F4F9FD",
         },
+      },
+      fontFamily: {
+        bubble: ["'Fredoka'", "'Comic Sans MS'", "cursive", "sans-serif"],
       },
       animation: {
-        'bounce-slow': 'bounce 2.5s infinite',
+        'float-slow': 'float 3.5s ease-in-out infinite',
         'wiggle': 'wiggle 1s ease-in-out infinite',
-        'float': 'float 3s ease-in-out infinite',
-        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'bounce-subtle': 'bounceSubtle 2s infinite',
+        'pulse-glow': 'pulseGlow 2s infinite',
       },
       keyframes: {
-        wiggle: {
-          '0%, 100%': { transform: 'rotate(-3deg)' },
-          '50%': { transform: 'rotate(3deg)' },
-        },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' },
         },
+        wiggle: {
+          '0%, 100%': { transform: 'rotate(-4deg)' },
+          '50%': { transform: 'rotate(4deg)' },
+        },
+        bounceSubtle: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
         pulseGlow: {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },
-          '50%': { opacity: '.9', transform: 'scale(1.03)' },
+          '50%': { opacity: '0.9', transform: 'scale(1.02)' },
         },
       },
     },

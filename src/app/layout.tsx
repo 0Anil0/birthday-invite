@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Liam's 5th Birthday Invitation! 🎈🎂",
-  description: "You are invited to Liam's 5th Birthday Adventure! Watch the video invite and RSVP.",
+  title: "Sharvil (Shivi)'s 1st Birthday! 🐾🎂 | Bluey Theme Invitation",
+  description: "Main 29th ko 1 saal ka hone ja raha hu, mere birthday par aap zaroor padhare! Sunday, Nov 29, 2026 at Kesarinandan Parkway, Udaipur.",
 };
 
 export default function RootLayout({
@@ -21,7 +21,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased selection:bg-pink-300 selection:text-pink-900" style={{ fontFamily: "'Nunito', sans-serif" }}>
+      <body className="antialiased selection:bg-blue-300 selection:text-blue-900" style={{ fontFamily: "'Nunito', sans-serif" }}>
         {children}
       </body>
     </html>
