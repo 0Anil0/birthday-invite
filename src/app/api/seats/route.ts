@@ -10,10 +10,15 @@ export async function GET() {
 
       const rsvps = await collection
         .find({ status: "accepted", selectedSeatId: { $exists: true, $ne: "" } })
-        .project({ selectedSeatId: 1, guestName: 1 })
+        .project<{ selectedSeatId?: string; guestName?: string }>({ selectedSeatId: 1, guestName: 1 })
         .toArray();
 
-      const reservedSeatIds = rsvps.map((r) => r.selectedSeatId);
+      const reservedSeatIds: string[] = [];
+      for (const r of rsvps) {
+        if (typeof r.selectedSeatId === "string" && r.selectedSeatId.length > 0) {
+          reservedSeatIds.push(r.selectedSeatId);
+        }
+      }
 
       return NextResponse.json({
         reservedSeats: reservedSeatIds,
